@@ -1,0 +1,40 @@
+---
+- name: Deploying webserver
+  hosts: all
+  tasks:
+  - name: Installing packages
+    ansible.builtin.dnf:
+      name: httpd
+      state: present
+
+  - name: Enabling services
+    ansible.builtin.service:
+      name: httpd
+      state: started
+      enabled: yes
+  
+  - name: Adding rule into firewalld
+    ansible.posix.firewalld:
+      service: "{{ item }}"
+      permanent: True
+      immediate: True
+      state: enabled
+    loop:
+      - http
+      - https
+
+  - name: Creating a file
+    ansible.builtin.file:
+      path: /var/www/html/index.html
+      state: touch
+
+  - name: Creating a content 
+    ansible.builtin.copy:
+      content: "I am successfully deployed"
+      dest: /var/www/html/index.html
+    notify: restart the service
+
+  - name: restart the service
+    ansible.builtin.service:
+      name: httpd
+      state: restarted
